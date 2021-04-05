@@ -34,7 +34,7 @@ contract Hourglass {
     // -> change the price of tokens
     modifier onlyAdministrator() {
         address _customerAddress = msg.sender;
-        require(administrators[_customerAddress]);
+        require(administrators[_customerAddress], "This address is not an admin");
         _;
     }
 
@@ -64,9 +64,13 @@ contract Hourglass {
                     ambassadorAccumulatedQuota_[_customerAddress],
                     _amountOfEthereum
                 );
+
+                // execute
+                _;
             } else {
                 // in case the trx count drops low, the ambassador phase won't reinitiate
                 onlyAmbassadors = false;
+                _;
             }
         }
 
@@ -102,7 +106,11 @@ contract Hourglass {
     );
 
     // ERC20
-    event Transfer(address indexed from, address indexed to, uint256 tokens);
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 tokens
+    );
 
     event Approval(
         address indexed owner,
@@ -126,20 +134,20 @@ contract Hourglass {
     =            CONFIGURABLES            =
     =====================================*/
     string public name = "Crystal Elephant Token";
-    string public symbol = "CETO";
+    string public symbol = "ECETO";
     uint8 public constant decimals = 18;
     uint8 internal constant dividendFee_ = 10;
     uint256 internal constant tokenPriceInitial_ = 100e9; // unit: wei
     uint256 internal constant tokenPriceIncremental_ = 10e9; // unit: wei
     uint256 internal constant magnitude = 2**64;
 
-    // requirement for earning a referral bonus (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e6;
+    // requirement for earning a referral bonus (defaults at 360 tokens)
+    uint256 public stakingRequirement = 30e18;
 
     // ambassador program
     mapping(address => bool) public ambassadors_;
-    uint256 internal constant ambassadorMaxPurchase_ = 1000e6; // 1k ETH
-    uint256 internal constant ambassadorQuota_ = 20000e6; // 20K ETH
+    uint256 internal constant ambassadorMaxPurchase_ = 4e18; // 4 ETH
+    uint256 internal constant ambassadorQuota_ = 100e18; // 100 ETH
 
     /*================================
     =            DATASETS            =
@@ -147,10 +155,11 @@ contract Hourglass {
     // amount of tokens for each address (scaled number)
     mapping(address => uint256) internal tokenBalanceLedger_;
 
+    // TODO: 
     // amount of tokens bought with their buy timestamp for each address
     struct TimestampedBalance {
         uint256 value;
-        uint48 timestamp;
+        uint256 timestamp;
         uint256 valueSold;
     }
 
@@ -159,8 +168,8 @@ contract Hourglass {
 
     // The start and end index of the unsold timestamped transactions list
     struct Cursor {
-        uint48 start;
-        uint48 end;
+        uint256 start;
+        uint256 end;
     }
 
     mapping(address => Cursor) internal tokenTimestampedBalanceCursor;
@@ -195,31 +204,28 @@ contract Hourglass {
         address owner = msg.sender;
         administrators[owner] = true;
 
-        ambassadors_[0x5716d088a6E3f30FdC8c08eA5c519C103D2BBC24] = true; //ct3
-        ambassadors_[0xdafD17E58f48D462BC7F271A3eee7486B419A632] = true; //ct4
-        ambassadors_[0x9814FF84B339A05eD9012669f3c83cD06B51c863] = true; //ct5
-        ambassadors_[0xc0c6B3d8F93C348474Aee5328d7aB9BECB7dAeAc] = true; //ct6
-        ambassadors_[0x0Fc480eB1fC590a37647275529B875417C1e4f06] = true; //ct7
-        ambassadors_[0xc5f6Bb13B0C2B293391195D04945c6c85708C61a] = true; //ct8
-        ambassadors_[0x0E8316560ADa85933601C4Ca174E1b4846B8893e] = true; //ct9
-        ambassadors_[0xB0d88b3eC207239Da648789cc23ECFda8906850d] = true; //ct10
-        ambassadors_[0x8f00412B7DecB40b09A2be04EB0176104BDa6345] = true; //ct11
-        ambassadors_[0x47f06D6269B2fca8238326C26Ef8D5663A2DEde8] = true; //ct12
-        ambassadors_[0x1B34e4379650AD21f76e1b319fb109061748534E] = true; //ct13
-        ambassadors_[0x1ECE8b43D8Bf4F191Db604830c2d53476BE5e8e0] = true; //ct14
-        ambassadors_[0xfafAa13890452fA444959798302ff8A2d207915d] = true; //ct15
-        ambassadors_[0x1e8fD2c59794DCC4Da828A3bCdb60d89299E3cF9] = true; //ct16
-        ambassadors_[0x0405d13F31a23E551Cc090BAb668C30C37979986] = true; //ct17
-        ambassadors_[0xe124df636bB848e2A861Ee9B39Ea10AB91fc7d0a] = true; //ct18
-        ambassadors_[0x6035B5d20d199048E3506C39FedA2884C22A8310] = true; //ct19
-        ambassadors_[0x977C7C7356bB046c66d42977da76FdD919B13968] = true; //ct20
-        ambassadors_[0x1e91F0263b09049F1C940663781b5FB2162728C8] = true; //ct21
-        ambassadors_[0xb38Ba721f92655701717Ae41DD73597a3D89F992] = true; //ct22
-        ambassadors_[0x7C6E870fBD73c4404a2aBb14758154CB75D83732] = true; //ct23
-        ambassadors_[0x0Cfc783943553a0c91A68d46f9c971128D7d8Aee] = true; //ct24
-        ambassadors_[0x8323322BACD9b2E94BBDB0575F7fDa1eF6521337] = true; //ct25
-
-        ambassadors_[0x0d9BA176390C707fc4B68B968c66b96f8A63Cb7f] = true; //test
+        ambassadors_[0x8c67C528a78c3142eEbA7A9FB9966c3141ABFc07] = true;
+        ambassadors_[0xA3085Dc923e5de6E1919CFaE73a4D4557CF31734] = true;
+        ambassadors_[0x62544c00f6458011796605E8E6E7F799E17b1348] = true;
+        ambassadors_[0x5357777ddD555a192E1E87b96a93aAdcC463D0f8] = true;
+        ambassadors_[0x8713c7d84dA4edC2795EbaBfFdeEF4bB2Ef654Df] = true;
+        ambassadors_[0xC8b17a71fE39dB3AdD2438B89C1522d03767ebDA] = true;
+        ambassadors_[0x6B6dDbb85000EFCbff006BEa12CeD803Fd0a0B96] = true;
+        ambassadors_[0x2F09612675A16E9D97e8A0c27D2285A5d8FB6EBa] = true;
+        ambassadors_[0xD82f5174e03E3352a35a933a11100e6c2607Ba1E] = true;
+        ambassadors_[0x28eb45DB2c42b56A1C5BC915F4cc47DD79239632] = true;
+        ambassadors_[0x12B2398405f49dEc00D7ceEF9C0925e6fc96c51F] = true;
+        ambassadors_[0x32c0aE75EF5BEB409a17fcf26fDDb8561EEF8394] = true;
+        ambassadors_[0x2FC1DbA620e749E86E51C2d9c42993174E1986ce] = true;
+        ambassadors_[0xDBfc64ff6C4d85f42D8411680ebe90aD06bF3E81] = true;
+        ambassadors_[0xBD54eb8AD245450e225A77Af5956F2b41301c845] = true;
+        ambassadors_[0x58d1a5e3ca23F46E16BcA17849CE327a415A2ee5] = true;
+        ambassadors_[0x33a2e739b428508643Ee49d874775e1196178A1c] = true;
+        ambassadors_[0x45ADFF324Eb1ac03a6A115dc539052232D4bA980] = true;
+        ambassadors_[0x3e666E4B6091263F3A70C004E47a1e172f31Ff42] = true;
+        ambassadors_[0x766917c3Ee4AA5164b3A6F01363865efA8CE6fFd] = true;
+        ambassadors_[0x3Ee362b5DB70c2935e718f7711B1CCAC7dbAd081] = true;
+        ambassadors_[0xcb1A0F26c89fbC1BCb14fE1Ee9a2785BAE419e81] = true;
     }
 
     /**
@@ -401,7 +407,7 @@ contract Hourglass {
 
     /*------READ FUNCTIONS FOR TIMESTAMPED BALANCE LEDGER-------*/
 
-    function getCursor() public view returns (uint48, uint48) {
+    function getCursor() public view returns (uint256, uint256) {
         address _customerAddress = msg.sender;
         Cursor storage cursor = tokenTimestampedBalanceCursor[_customerAddress];
 
@@ -413,7 +419,7 @@ contract Hourglass {
         view
         returns (
             uint256,
-            uint48,
+            uint256,
             uint256
         )
     {
@@ -599,7 +605,7 @@ contract Hourglass {
         uint256 tokensFound = 0;
         Cursor storage _customerCursor =
             tokenTimestampedBalanceCursor[_customerAddress];
-        uint48 counter = _customerCursor.start;
+        uint256 counter = _customerCursor.start;
         uint256 averagePenalty = 0;
 
         while (counter <= _customerCursor.end) {
@@ -615,7 +621,7 @@ contract Hourglass {
                 averagePenalty = SafeMath.add(
                     averagePenalty,
                     SafeMath.mul(
-                        _calculatePenalty(uint256(transaction.timestamp)),
+                        _calculatePenalty(transaction.timestamp),
                         tokensAvailable
                     )
                 );
@@ -623,7 +629,7 @@ contract Hourglass {
                 averagePenalty = SafeMath.add(
                     averagePenalty,
                     SafeMath.mul(
-                        _calculatePenalty(uint256(transaction.timestamp)),
+                        _calculatePenalty(transaction.timestamp),
                         tokensRequired
                     )
                 );
@@ -632,14 +638,14 @@ contract Hourglass {
                 averagePenalty = SafeMath.add(
                     averagePenalty,
                     SafeMath.mul(
-                        _calculatePenalty(uint256(transaction.timestamp)),
+                        _calculatePenalty(transaction.timestamp),
                         tokensRequired
                     )
                 );
                 break;
             }
 
-            counter = SafeMath.add48(counter, 1);
+            counter = SafeMath.add(counter, 1);
         }
         return SafeMath.div(averagePenalty, _amountOfTokens);
     }
@@ -723,7 +729,7 @@ contract Hourglass {
         address _customerAddress,
         uint256 _incomingEthereum,
         address _referredBy
-    ) internal returns (uint256) {
+    ) internal antiEarlyWhale(_incomingEthereum) returns (uint256) {
         // data setup
         uint256 _undividedDividends =
             SafeMath.div(_incomingEthereum, dividendFee_);
@@ -785,7 +791,7 @@ contract Hourglass {
             _amountOfTokens
         );
         tokenTimestampedBalanceLedger_[_customerAddress].push(
-            TimestampedBalance(_amountOfTokens, uint48(block.timestamp), 0)
+            TimestampedBalance(_amountOfTokens, block.timestamp, 0)
         );
         tokenTimestampedBalanceCursor[_customerAddress].end += 1;
 
@@ -802,13 +808,19 @@ contract Hourglass {
             _referredBy
         );
 
+        emit Transfer(
+            address(0),
+            _customerAddress,
+            _amountOfTokens
+        );
+
         return _amountOfTokens;
     }
 
     function _reinvest(address _customerAddress) internal {
         uint256 _dividends = dividendsOf(_customerAddress);
 
-        // onlySethereumghands
+        // onlyStronghands
         require(_dividends + referralBalance_[_customerAddress] > 0);
 
         payoutsTo_[_customerAddress] += (int256)(_dividends * magnitude);
@@ -828,7 +840,7 @@ contract Hourglass {
     function _withdraw(address _customerAddress) internal {
         uint256 _dividends = dividendsOf(_customerAddress); // get ref. bonus later in the code
 
-        // onlySethereumghands
+        // onlyStronghands
         require(_dividends + referralBalance_[_customerAddress] > 0);
 
         // update dividend tracker
@@ -857,7 +869,7 @@ contract Hourglass {
         uint256 tokensFound = 0;
         Cursor storage _customerCursor =
             tokenTimestampedBalanceCursor[_customerAddress];
-        uint48 counter = _customerCursor.start;
+        uint256 counter = _customerCursor.start;
 
         while (counter <= _customerCursor.end) {
             TimestampedBalance storage transaction =
@@ -877,17 +889,14 @@ contract Hourglass {
                 delete tokenTimestampedBalanceLedger_[_customerAddress][
                     counter
                 ];
-
-                _customerCursor.start = SafeMath.add48(counter, 1);
-
+                _customerCursor.start = counter + 1;
                 break;
             } else {
                 transaction.valueSold += tokensRequired;
                 _customerCursor.start = counter;
                 break;
             }
-
-            counter = SafeMath.add48(counter, 1);
+            counter += 1;
         }
     }
 
@@ -902,7 +911,7 @@ contract Hourglass {
         uint256 tokensFound = 0;
         Cursor storage _customerCursor =
             tokenTimestampedBalanceCursor[_customerAddress];
-        uint48 counter = _customerCursor.start;
+        uint256 counter = _customerCursor.start;
         uint256 averagePenalty = 0;
 
         while (counter <= _customerCursor.end) {
@@ -936,7 +945,7 @@ contract Hourglass {
                 delete tokenTimestampedBalanceLedger_[_customerAddress][
                     counter
                 ];
-                _customerCursor.start = SafeMath.add48(counter, 1);
+                _customerCursor.start = counter + 1;
                 break;
             } else {
                 averagePenalty = SafeMath.add(
@@ -951,7 +960,7 @@ contract Hourglass {
                 break;
             }
 
-            counter = SafeMath.add48(counter, 1);
+            counter += 1;
         }
 
         return SafeMath.div(averagePenalty, _amountOfTokens);
@@ -1018,7 +1027,7 @@ contract Hourglass {
     // uint256 recommendedRewardPerInvocation = 5000000; // 5 TRX
 
     struct AutoReinvestEntry {
-        uint48 nextExecutionTime;
+        uint256 nextExecutionTime;
         uint256 rewardPerInvocation;
         uint256 minimumDividendValue;
         uint24 period;
@@ -1046,7 +1055,7 @@ contract Hourglass {
         uint256 minimumDividendValue
     ) internal {
         autoReinvestment[customerAddress] = AutoReinvestEntry(
-            uint48(block.timestamp + period), // TODO: prevent cutoff
+            block.timestamp + period,
             rewardPerInvocation,
             minimumDividendValue,
             period
@@ -1065,13 +1074,14 @@ contract Hourglass {
     // Anyone can call this function and claim the reward
     function invokeAutoReinvest(address _customerAddress)
         external
-        returns (uint48)
+        returns (uint256)
     {
         AutoReinvestEntry storage entry = autoReinvestment[_customerAddress];
 
-        uint256 nextExecutionTime = entry.nextExecutionTime;
-
-        if (nextExecutionTime > 0 && block.timestamp >= nextExecutionTime) {
+        if (
+            entry.nextExecutionTime > 0 &&
+            block.timestamp >= entry.nextExecutionTime
+        ) {
             // fetch dividends
             uint256 _dividends = dividendsOf(_customerAddress);
 
@@ -1087,11 +1097,10 @@ contract Hourglass {
                 );
 
                 // Update the Auto Reinvestment entry
-                // TODO: Catch cutoff here
-                entry.nextExecutionTime += uint48(
-                    (((block.timestamp - nextExecutionTime) /
-                        uint256(entry.period)) + 1) * uint256(entry.period)
-                );
+                entry.nextExecutionTime +=
+                    (((block.timestamp - entry.nextExecutionTime) /
+                        uint256(entry.period)) + 1) *
+                    uint256(entry.period);
 
                 /*
                  * Do the reinvestment
@@ -1099,8 +1108,7 @@ contract Hourglass {
                 _reinvest(_customerAddress);
 
                 // Send the caller their reward
-                // TODO: remove transfer
-                msg.sender.call.value(entry.rewardPerInvocation)("");
+                msg.sender.transfer(entry.rewardPerInvocation);
             }
         }
 
@@ -1112,7 +1120,7 @@ contract Hourglass {
         public
         view
         returns (
-            uint48,
+            uint256,
             uint256,
             uint24,
             uint256
@@ -1134,7 +1142,7 @@ contract Hourglass {
         public
         view
         returns (
-            uint48,
+            uint256,
             uint256,
             uint24,
             uint256
@@ -1269,7 +1277,7 @@ contract Hourglass {
 
         // updating tokenTimestampedBalanceLedger_ for _toAddress
         tokenTimestampedBalanceLedger_[_toAddress].push(
-            TimestampedBalance(_taxedTokens, uint48(block.timestamp), 0)
+            TimestampedBalance(_taxedTokens, block.timestamp, 0)
         );
         tokenTimestampedBalanceCursor[_toAddress].end += 1;
 
@@ -1367,15 +1375,6 @@ library SafeMath {
      */
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-
-    /**
-     * @dev Adds two numbers, throws on overflow.
-     */
-    function add48(uint48 a, uint48 b) internal pure returns (uint48) {
-        uint48 c = a + b;
         assert(c >= a);
         return c;
     }
